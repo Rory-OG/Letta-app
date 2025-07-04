@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Letta Knowledge Assistant{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Dashboard
+        </h2>
+        <p class="text-muted">Welcome to your personal knowledge management assistant</p>
+    </div>
+</div>
+
+<!-- Status Cards Row -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-robot fa-2x text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Agent Status</h6>
+                        <div class="d-flex align-items-center">
+                            <span class="status-indicator {% if agent_status.status == 'active' %}status-active{% else %}status-inactive{% endif %}"></span>
+                            <span class="fw-bold">{{ agent_status.status|title if agent_status else 'Unknown' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-file-alt fa-2x text-success"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Documents</h6>
+                        <span class="fw-bold fs-4">{{ knowledge_stats.documents if knowledge_stats else 0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-sticky-note fa-2x text-warning"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Notes</h6>
+                        <span class="fw-bold fs-4">{{ knowledge_stats.notes if knowledge_stats else 0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-comments fa-2x text-info"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-title mb-1">Conversations</h6>
+                        <span class="fw-bold fs-4">{{ agent_status.conversation_count if agent_status else 0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Row -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary w-100" onclick="window.location.href='/chat'">
+                            <i class="fas fa-comments me-1"></i>
+                            Start Chat
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-success w-100" onclick="uploadFile()">
+                            <i class="fas fa-upload me-1"></i>
+                            Upload File
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-warning w-100" onclick="createNote()">
+                            <i class="fas fa-sticky-note me-1"></i>
+                            Quick Note
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-info w-100" onclick="searchKnowledge()">
+                            <i class="fas fa-search me-1"></i>
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    System Status
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if agent_status %}
+                <div class="mb-3">
+                    <small class="text-muted">Agent ID:</small><br>
+                    <code class="text-truncate d-block">{{ agent_status.agent_id[:20] }}...</code>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Model:</small><br>
+                    <span class="badge bg-secondary">{{ agent_status.model if agent_status.model else 'Unknown' }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Tools Available:</small><br>
+                    <span class="badge bg-info">{{ agent_status.tools_available if agent_status.tools_available else 0 }} tools</span>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Agent not initialized. Please check configuration.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Row -->
+<div class="row">
+    <div class="col-md-8 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Recent Conversations
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_conversations %}
+                    <div class="list-group list-group-flush">
+                        {% for conversation in recent_conversations %}
+                        <div class="list-group-item border-0 px-0">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ conversation.user_message[:80] }}...</h6>
+                                <small class="text-muted">{{ conversation.timestamp }}</small>
+                            </div>
+                            <p class="mb-1 text-muted">
+                                {% if conversation.agent_response.messages %}
+                                    {{ conversation.agent_response.messages[0].content[:150] }}...
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('chat') }}" class="btn btn-primary">
+                            <i class="fas fa-comments me-1"></i>
+                            View All Conversations
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No conversations yet</h6>
+                        <p class="text-muted">Start chatting with your assistant to see conversations here.</p>
+                        <a href="{{ url_for('chat') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            Start First Conversation
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Getting Started
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary rounded-pill me-2">1</span>
+                            <span>Upload your first document</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary rounded-pill me-2">2</span>
+                            <span>Create some notes</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary rounded-pill me-2">3</span>
+                            <span>Start a conversation</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary rounded-pill me-2">4</span>
+                            <span>Search and organize</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6 class="text-muted">Features:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success me-1"></i> Persistent memory</li>
+                        <li><i class="fas fa-check text-success me-1"></i> Document processing</li>
+                        <li><i class="fas fa-check text-success me-1"></i> Semantic search</li>
+                        <li><i class="fas fa-check text-success me-1"></i> Task management</li>
+                        <li><i class="fas fa-check text-success me-1"></i> Calendar integration</li>
+                        <li><i class="fas fa-check text-success me-1"></i> Web search</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh agent status every 30 seconds
+    setInterval(async function() {
+        try {
+            const response = await fetch('/api/agent/status');
+            const data = await response.json();
+            
+            if (data.status) {
+                // Update status indicator
+                const indicator = document.querySelector('.status-indicator');
+                indicator.className = 'status-indicator ' + 
+                    (data.status === 'active' ? 'status-active' : 'status-inactive');
+                
+                // Update status text
+                const statusText = indicator.nextElementSibling;
+                statusText.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+            }
+        } catch (error) {
+            console.warn('Failed to update agent status:', error);
+        }
+    }, 30000);
+
+    // Add fade-in animation to cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

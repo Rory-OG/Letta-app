@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: letta-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-letta_db}
+      POSTGRES_USER: ${POSTGRES_USER:-letta_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-letta_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - letta-network
+    restart: unless-stopped
+
+  # Letta Server
+  letta-server:
+    image: letta/letta:latest
+    container_name: letta-server
+    depends_on:
+      - postgres
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LETTA_SERVER_PASSWORD=${LETTA_SERVER_PASSWORD}
+      - SECURE=${SECURE:-true}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-letta_db}
+      - POSTGRES_USER=${POSTGRES_USER:-letta_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-letta_password}
+    volumes:
+      - letta_data:/app/data
+      - ./src/tools:/app/custom_tools
+    ports:
+      - "8283:8283"
+    networks:
+      - letta-network
+    restart: unless-stopped
+    command: >
+      sh -c "
+        sleep 10 &&
+        letta server
+      "
+
+  # Web Application
+  web-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: letta-web-app
+    depends_on:
+      - letta-server
+    environment:
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - LETTA_SERVER_URL=http://letta-server:8283
+      - LETTA_SERVER_PASSWORD=${LETTA_SERVER_PASSWORD}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+    ports:
+      - "5000:5000"
+    networks:
+      - letta-network
+    restart: unless-stopped
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: letta-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - letta-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  letta_data:
+  redis_data:
+
+networks:
+  letta-network:
+    driver: bridge

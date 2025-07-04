@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Letta Knowledge Assistant{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #e5e7eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --light-color: #f9fafb;
+        }
+
+        body {
+            background-color: var(--light-color);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #6366f1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .sidebar {
+            background: white;
+            min-height: calc(100vh - 76px);
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .nav-link {
+            border-radius: 8px;
+            margin: 2px 0;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background-color: var(--secondary-color);
+            transform: translateX(2px);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), #6366f1);
+            color: white !important;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #6366f1);
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid var(--secondary-color);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-active { background-color: var(--success-color); }
+        .status-inactive { background-color: var(--danger-color); }
+        .status-warning { background-color: var(--warning-color); }
+
+        .chat-container {
+            height: 60vh;
+            overflow-y: auto;
+            border: 1px solid var(--secondary-color);
+            border-radius: 12px;
+            padding: 1rem;
+            background: white;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, var(--primary-color), #6366f1);
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            background: var(--secondary-color);
+            color: var(--dark-color);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .tag {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 0.125rem;
+            display: inline-block;
+        }
+
+        .file-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                border-radius: 0;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-brain me-2"></i>
+                Letta Assistant
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('chat') }}">
+                            <i class="fas fa-comments me-1"></i> Chat
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('knowledge') }}">
+                            <i class="fas fa-book me-1"></i> Knowledge
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('agent') }}">
+                            <i class="fas fa-robot me-1"></i> Agent
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 px-0 d-none d-md-block">
+                <div class="sidebar p-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                                <i class="fas fa-home me-2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'chat' %}active{% endif %}" href="{{ url_for('chat') }}">
+                                <i class="fas fa-comments me-2"></i> Chat
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'knowledge' %}active{% endif %}" href="{{ url_for('knowledge') }}">
+                                <i class="fas fa-book me-2"></i> Knowledge Base
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'agent' %}active{% endif %}" href="{{ url_for('agent') }}">
+                                <i class="fas fa-robot me-2"></i> Agent Status
+                            </a>
+                        </li>
+                        <hr>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="uploadFile()">
+                                <i class="fas fa-upload me-2"></i> Upload File
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="createNote()">
+                                <i class="fas fa-sticky-note me-2"></i> Quick Note
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="searchKnowledge()">
+                                <i class="fas fa-search me-2"></i> Search
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10">
+                <div class="p-4">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Page Content -->
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Upload File Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload File</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="fileInput" class="form-label">Choose File</label>
+                            <input type="file" class="form-control" id="fileInput" name="file" accept=".pdf,.docx,.txt,.md,.csv,.xlsx,.json,.xml">
+                        </div>
+                        <div class="mb-3">
+                            <label for="fileDescription" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="fileDescription" name="description" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="upload-text">Upload</span>
+                            <span class="upload-loading d-none"><span class="loading"></span> Uploading...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Note Modal -->
+    <div class="modal fade" id="noteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Quick Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="noteForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="noteTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="noteTitle" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="noteContent" class="form-label">Content</label>
+                            <textarea class="form-control" id="noteContent" name="content" rows="4" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="noteTags" class="form-label">Tags (comma-separated)</label>
+                            <input type="text" class="form-control" id="noteTags" name="tags" placeholder="work, important, project">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Note</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div class="modal fade" id="searchModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Search Knowledge Base</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search for documents, notes, or information...">
+                    </div>
+                    <div id="searchResults"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Utility functions
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+            toast.style.zIndex = '9999';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 5000);
+        }
+
+        // Modal functions
+        function uploadFile() {
+            new bootstrap.Modal(document.getElementById('uploadModal')).show();
+        }
+
+        function createNote() {
+            new bootstrap.Modal(document.getElementById('noteModal')).show();
+        }
+
+        function searchKnowledge() {
+            new bootstrap.Modal(document.getElementById('searchModal')).show();
+        }
+
+        // Upload form handler
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const uploadText = document.querySelector('.upload-text');
+            const uploadLoading = document.querySelector('.upload-loading');
+            
+            uploadText.classList.add('d-none');
+            uploadLoading.classList.remove('d-none');
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('File uploaded successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+                    this.reset();
+                } else {
+                    showToast(result.error || 'Upload failed', 'danger');
+                }
+            } catch (error) {
+                showToast('Upload failed: ' + error.message, 'danger');
+            } finally {
+                uploadText.classList.remove('d-none');
+                uploadLoading.classList.add('d-none');
+            }
+        });
+
+        // Note form handler
+        document.getElementById('noteForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                title: formData.get('title'),
+                content: formData.get('content'),
+                tags: formData.get('tags').split(',').map(tag => tag.trim()).filter(tag => tag)
+            };
+            
+            try {
+                const response = await fetch('/api/notes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Note saved successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('noteModal')).hide();
+                    this.reset();
+                } else {
+                    showToast(result.error || 'Failed to save note', 'danger');
+                }
+            } catch (error) {
+                showToast('Failed to save note: ' + error.message, 'danger');
+            }
+        });
+
+        // Search handler
+        document.getElementById('searchInput').addEventListener('input', debounce(async function(e) {
+            const query = e.target.value.trim();
+            
+            if (query.length < 3) {
+                document.getElementById('searchResults').innerHTML = '';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displaySearchResults(result.results);
+                } else {
+                    document.getElementById('searchResults').innerHTML = `<p class="text-danger">${result.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('searchResults').innerHTML = `<p class="text-danger">Search failed: ${error.message}</p>`;
+            }
+        }, 300));
+
+        function displaySearchResults(results) {
+            const container = document.getElementById('searchResults');
+            
+            if (results.length === 0) {
+                container.innerHTML = '<p class="text-muted">No results found.</p>';
+                return;
+            }
+            
+            container.innerHTML = results.map(result => `
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h6 class="card-title">${result.title}</h6>
+                        <p class="card-text small">${result.content}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-secondary">${result.type}</span>
+                            <small class="text-muted">Score: ${(result.relevance_score * 100).toFixed(1)}%</small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
