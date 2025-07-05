@@ -1,0 +1,76 @@
+# Core Letta dependencies
+letta-client==0.6.3
+letta==0.6.3
+
+# Web framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-SocketIO==5.3.6
+
+# Database
+psycopg2-binary==2.9.9
+SQLAlchemy==2.0.23
+alembic==1.13.1
+
+# Document processing
+PyPDF2==3.0.1
+python-docx==1.1.0
+python-pptx==0.6.23
+pandas==2.1.4
+openpyxl==3.1.2
+
+# Text processing and NLP
+nltk==3.8.1
+spacy==3.7.2
+sentence-transformers==2.2.2
+chromadb==0.4.18
+
+# File handling
+python-magic==0.4.27
+Pillow==10.1.0
+
+# Caching and storage
+redis==5.0.1
+requests==2.31.0
+
+# Task scheduling
+celery==5.3.4
+APScheduler==3.10.4
+
+# Utilities
+python-dotenv==1.0.0
+click==8.1.7
+pydantic==2.5.2
+jinja2==3.1.2
+markupsafe==2.1.3
+
+# Date and time
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Logging and monitoring
+structlog==23.2.0
+
+# Security
+werkzeug==3.0.1
+cryptography==41.0.8
+
+# Development tools
+pytest==7.4.3
+pytest-flask==1.3.0
+black==23.11.0
+flake8==6.1.0
+
+# Web scraping (for web search tool)
+beautifulsoup4==4.12.2
+requests-html==0.10.0
+
+# JSON handling
+ujson==5.9.0
+
+# Email support
+email-validator==2.1.0
+
+# Math and scientific computing
+numpy==1.25.2
+scipy==1.11.4
